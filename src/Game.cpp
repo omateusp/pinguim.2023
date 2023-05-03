@@ -1,17 +1,16 @@
-using namespace std;
 #include <iostream>
-#include "../include/Game.h"
 #define INCLUDE_SDL_IMAGE
 #define INCLUDE_SDL_MIXER
 #include "../include/SDL_include.h"
+#include "../include/Game.h"
+using namespace std;
 
-Game *Game::instance;
+Game *Game::instance = nullptr;
 
 Game &Game::GetInstance()
 {
-    if (instance != nullptr)
-        return *instance;
-    instance = new Game("Mateus Oliveira Patrício - 16/0015006", 1024, 600);
+    if (instance == nullptr)
+        new Game("Mateus Oliveira Patrício - 16/0015006", 1024, 600);
     return *instance;
 }
 
@@ -27,6 +26,8 @@ Game::Game(string title, int width, int height)
 {
     // Checks that instance doesn't already exist
     if (instance != nullptr)
+        throw runtime_error("Game already exists");
+    else
         instance = this;
 
     // SDL_Init
@@ -67,9 +68,7 @@ Game::Game(string title, int width, int height)
         close4();
         throw std::runtime_error("Mix_OpenAudio failed");
     }
-    Mix_AllocateChannels(32);
-    char *window_name = &*title.begin();
-    window = SDL_CreateWindow(window_name, 0, 0, width, height, 0); // SDL_WINDOWPOS_CENTERED
+    window = SDL_CreateWindow(title.c_str(), 0, 0, width, height, 0); // SDL_WINDOWPOS_CENTERED
     if (window == nullptr)
     {
         close4();
@@ -103,9 +102,10 @@ SDL_Renderer *Game::GetRenderer()
 
 void Game::Run()
 {
-    state->LoadAssets();
+    // Waits for quit signal
     while (!state->QuitRequested())
     {
+        // Renders current State
         state->Update(1);
         state->Render();
         SDL_RenderPresent(renderer);
